@@ -61,7 +61,7 @@ MM-DD-YYYY.csv in UTC.
 * <b>Country_Region</b> - The name of the Country (US).
 * <b>Last_Update</b> - The most recent date the file was pushed.
 * <b>Lat</b> - Latitude.
-* <b>Long_</b> - Longitude.
+* <b>Lon</b> - Longitude.
 * <b>Confirmed</b> - Aggregated case count for the state.
 * <b>Deaths</b> - Aggregated death toll for the state.
 * <b>Recovered</b> - Aggregated Recovered case count for the state.
