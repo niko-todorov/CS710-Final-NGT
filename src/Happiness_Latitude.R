@@ -13,7 +13,7 @@ data$Country[data$Country=="United States"] <- "USA"
 data$Country[data$Country=="United Kingdom"] <- "UK"
 
 #Set happiness score of each country to mean of that country over all years
-world_happiness<-data %>% group_by(Country,Region) %>% summarise(Score=mean(HappinessScore),Population=mean(Population))
+world_happiness <- data %>% group_by(Country,Region) %>% summarise(Score=mean(HappinessScore),Population=mean(Population))
 
 #Read in country data
 countries<-map_data("world")
@@ -54,7 +54,10 @@ latitude<-happiness_map %>% group_by(region) %>% summarise(score=mean(Score),lat
 min_score<-min(latitude$score)
 max_score<-max(latitude$score)
 
+# added lat_cat column
 latitude$lat_cat<-factor(cut(latitude$lat,breaks=seq(0,70,5),labels=seq(0,65,5)))
+
+# added mean_score column
 latitude<-latitude %>% group_by(lat_cat) %>% mutate(mean_score=mean(score))
 box_plot <- ggplot(latitude,aes(x=score,y=lat_cat,fill=mean_score)) +
   geom_boxplot() +
@@ -70,7 +73,10 @@ lay <- rbind(c(1,1,1,1,1),
              c(NA,2,2,2,NA))
 grid.arrange(map_plot, box_plot, layout_matrix = lay)
 
+# added pop_cat column as log(pop) in 100 bins from 0 to 1
 latitude$pop_cat<-factor(cut(1/log10(latitude$pop),breaks=seq(0,1,.01)))
+
+# 
 popcat<-latitude %>% group_by(lat_cat) %>% count(lat_cat, pop_cat_max=pop_cat) %>% slice(which.max(n))
 latitude<-merge(latitude,popcat,by.x="lat_cat",by.y="lat_cat")
 

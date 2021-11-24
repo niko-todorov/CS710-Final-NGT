@@ -1,3 +1,5 @@
+# install.Rtools(check = TRUE, check_r_update = TRUE, GUI = TRUE)
+
 packages<-c("ggplot2","tibble","dplyr","tidyr","viridis","mapproj","purrr")
 install.packages(setdiff(packages, rownames(installed.packages())))
 library(ggplot2)
@@ -13,7 +15,7 @@ library(ggalt)
 
 
 
-happiness <- read_csv("data/happinessdata.csv")
+happiness <- read_csv("dat/happinessdata.csv")
 mid <- mean(happiness$Year)
 ggplot(happiness,aes(x=Economy,y=HappinessScore,color=Year))+
   geom_point() +
