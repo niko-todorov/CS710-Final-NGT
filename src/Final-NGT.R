@@ -5,50 +5,40 @@
 # Install the necessary packages
 library(pacman,quietly=TRUE,warn.conflicts=FALSE)
 pacman::p_unload(pacman::p_loaded(),character.only=TRUE)
+my.packages <- c("dplyr","cartogram","ggplot2","tidyr","rgdal","sf","sp","readr","rnaturalearth","viridis","purrr","tmap")
+install.packages(setdiff(my.packages, rownames(installed.packages())))
 
 # Install R Environment
 # if (!requireNamespace("remotes")) install.packages("remotes")
 # remotes::install_github("rstudio/renv")
 
-my.packages <- c("dplyr","cartogram","ggplot2","tidyr","maptools","rgdal","sf","sp")
-install.packages(setdiff(my.packages, rownames(installed.packages())))
-
 # Load required R packages
 library(dplyr,quietly=TRUE,warn.conflicts=FALSE)        # data wrangling
 library(cartogram,quietly=TRUE,warn.conflicts=FALSE)    # for the cartogram
-library(ggplot2,quietly=TRUE,warn.conflicts=FALSE)      # to realize the plots
-library(tidyr,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)
-library(sp,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)     
-options("rgdal_show_exportToProj4_warnings"="none")
-library(rgdal,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)
-library(sf,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)     
-library(readr,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)
-# library(maptools,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE) # world map
+library(ggplot2,quietly=TRUE,warn.conflicts=FALSE)      # to do the plots
+library(tidyr,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)  # data manipulation
+library(sp,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)     # spatial
+options(rgdal_show_exportToProj4_warnings="none")
+library(rgdal,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)  # R geo data abs lyr
+library(sf,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)     # spatial features
+library(readr,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)  # data manipulation
 library(rnaturalearth,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)  # world map
 library(viridis,quietly=TRUE,warn.conflicts=FALSE)      # for nice colors
-
+library(purrr,quietly=TRUE,warn.conflicts=FALSE)        # data manipulation
+library(tmap,quietly=TRUE,warn.conflicts=FALSE)         # maps creation
 # 1. IMPORT world map data
 world.map <- ne_countries(returnclass="sf")
 # 1.2. remove extraneous columns 
 world.map <- world.map %>% select(sovereignt) %>% 
   # 1.3. exclude no data countries
   filter(sovereignt != "Antarctica") %>% 
-  # filter(sovereignt != "North Korea") %>% 
+  filter(sovereignt != "North Korea") %>%
   filter(sovereignt != "Northern Cyprus") %>% 
   filter(sovereignt != "Somaliland") %>% 
   filter(sovereignt != "Turkmenistan") %>%
   filter(sovereignt != "Western Sahara") %>% 
-  # filter(sovereignt != "France") %>% 
-  # filter(sovereignt != "Denmark") %>% 
-  # filter(sovereignt != "Israel") %>% 
-  # filter(sovereignt != "United Kingdom") %>% 
-  # filter(sovereignt != "United States of America") %>% 
   # 1.4. transform and project https://proj.org/operations/projections/
   st_transform(world.map, crs="+proj=robin") # Robinson or Mollweide
-# world.map <- world.map %>% distinct(sovereignt, .keep_all = TRUE)
-# summary(world.map)
-# world.map$sovereignt
-plot(world.map)
 
 # fr <- world.map %>% select(sovereignt) %>% filter(sovereignt == "France")
 # dk <- world.map %>% select(sovereignt) %>% filter(sovereignt == "Denmark")
@@ -61,8 +51,6 @@ plot(world.map)
 # plot(il) # 2 dups, remove -2nd
 # plot(uk) # 2 dups, remove -1st
 # plot(us) # 2 dups, remove -1st
-
-# world.map %>% select(sovereignt) %>% filter(sovereignt=="France" | sovereignt=="Denmark" | sovereignt=="Israel" | sovereignt=="United Kingdom" | sovereignt=="United States of America")
 
 # duplicated(world.fin$sovereignt)==TRUE # 54, 56, 64, 112, 130, 163
 # world.fin$sovereignt[duplicated(world.fin$sovereignt)] # 11!
@@ -94,19 +82,35 @@ world.tab <- world.tab %>% mutate(sovereignt = Country) %>%
 world.fin <- left_join(world.map, world.tab, by = "sovereignt") %>% na.omit()
 # which(names(world.fin)=="1/22/2020") # 3
 # which(names(world.fin)=="8/21/2021") # 580
-# world.fin <- world.fin %>% 
-# world.map = st_as_sf(world.map)
 
 # a sample cartogram
-world.fin.beg = world.fin %>% select(sovereignt, 580) # "1/22/2020" "8/21/2021"
-# which(names(world.fin.beg)=="1/22/2020")
-world.carto.1 = cartogram_cont(world.fin.beg, weight="8/21/2021", itermax=15, maxSizeError=1.5)
-plot(world.carto.1, col = sf.colors(20, categorical = TRUE), border="grey", axes = FALSE)
-# plot(world.carto.1)
-
-# 5. LOOP (and save) over each date col to cartogram it 
-world.fin %>% select(sovereignt,3:580)
-
+world.beg = world.fin %>% select(sovereignt, 40) # "2/28/2020"
+world.carto = cartogram_cont(world.beg, 2, itermax=15, maxSizeError=1.5)
+plot(world.carto, col=sf.colors(5,categorical=TRUE), border="grey", axes = FALSE) # pal=viridis_pal,  
+world.fin <- world.fin %>% select(sovereignt,3:580)
 world.fin$indicator="deaths"
 tail(world.fin)
+
+# 5. LOOP (and save) over each day col to cartogram it 
+beg=which(names(world.fin)=="2/28/2020") # 40
+end=which(names(world.fin)=="8/21/2021") # 580
+# inc=10
+for (i in beg:end) {
+  print(i) 
+  # compute daily totals
+  world.loop = world.fin %>% select(sovereignt, i)
+    # %>% mutate(daily.total = sum(as.numeric(value), na.rm = TRUE)) 
+    # %>% mutate(title = paste0("date: ", day, "\nTotal COVID-19 deaths (x1000): ", round(daily.total/1e3, 2)))
+
+  world.carto = cartogram_cont(world.loop, 2, itermax=15, maxSizeError=1.5)
+  # warning: this may make your computer's fan spin!
+  # world.carto = world.loop %>% 
+  #   purrr::map(cartogram_cont, 2, itermax=15, maxSizeError=1.5) %>% 
+  #   do.call(rbind, .) 
+  # carto.anim = tm_shape(world.carto) + tm_polygons("deaths") +
+  #   tm_facets(along = "title", free.coords = FALSE, drop.units = TRUE)
+  # tmap_animation(carto.anim, filename = "covid19-deaths-world.gif",
+  #   delay = 75, width = 1326, height = 942)
+  plot(world.carto, col=sf.colors(5,categorical=TRUE), border="grey", axes = FALSE) 
+}
 
