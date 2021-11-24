@@ -84,12 +84,14 @@ world.fin <- left_join(world.map, world.tab, by = "sovereignt") %>% na.omit()
 # which(names(world.fin)=="8/21/2021") # 580
 
 # a sample cartogram
-world.beg = world.fin %>% select(sovereignt, 40) # "2/28/2020"
-world.carto = cartogram_cont(world.beg, 2, itermax=15, maxSizeError=1.5)
-plot(world.carto, col=sf.colors(5,categorical=TRUE), border="grey", axes = FALSE) # pal=viridis_pal,  
+# png(file="img//COVID040.png", width = 1326, height = 942)
+# world.beg = world.fin %>% select(sovereignt, 40) # "2/28/2020"
+# world.carto = cartogram_cont(world.beg, 2, itermax=15, maxSizeError=1.5)
+# plot(world.carto, col=sf.colors(5,categorical=TRUE), border="grey", axes = FALSE) # pal=viridis_pal,  
+# dev.off()
 world.fin <- world.fin %>% select(sovereignt,3:580)
 world.fin$indicator="deaths"
-tail(world.fin)
+# tail(world.fin) # 166
 
 # 5. LOOP (and save) over each day col to cartogram it 
 beg=which(names(world.fin)=="2/28/2020") # 40
@@ -111,6 +113,10 @@ for (i in beg:end) {
   #   tm_facets(along = "title", free.coords = FALSE, drop.units = TRUE)
   # tmap_animation(carto.anim, filename = "covid19-deaths-world.gif",
   #   delay = 75, width = 1326, height = 942)
+  
+  fname=sprintf("img//COVID%03d.png",i)
+  png(file=fname, width = 1326, height = 942)
   plot(world.carto, col=sf.colors(5,categorical=TRUE), border="grey", axes = FALSE) 
+  dev.off()
 }
 
