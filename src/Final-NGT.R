@@ -17,8 +17,8 @@ library(dplyr,quietly=TRUE,warn.conflicts=FALSE)        # data wrangling
 library(cartogram,quietly=TRUE,warn.conflicts=FALSE)    # for the cartogram
 library(ggplot2,quietly=TRUE,warn.conflicts=FALSE)      # to do the plots
 library(tidyr,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)  # data manipulation
-library(sp,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)     # spatial
 options(rgdal_show_exportToProj4_warnings="none")
+library(sp,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)     # spatial
 library(rgdal,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)  # R geo data abs lyr
 library(sf,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)     # spatial features
 library(readr,quietly=TRUE,warn.conflicts=FALSE,verbose=FALSE)  # data manipulation
@@ -38,7 +38,7 @@ world.map <- world.map %>% select(sovereignt) %>%
   filter(sovereignt != "Turkmenistan") %>%
   filter(sovereignt != "Western Sahara") %>% 
   # 1.4. transform and project https://proj.org/operations/projections/
-  st_transform(world.map, crs="+proj=robin") # Robinson or Mollweide
+  st_transform(world.map, crs="+proj=moll") # robin Robinson or moll Mollweide
 
 # fr <- world.map %>% select(sovereignt) %>% filter(sovereignt == "France")
 # dk <- world.map %>% select(sovereignt) %>% filter(sovereignt == "Denmark")
@@ -84,16 +84,17 @@ world.fin <- left_join(world.map, world.tab, by = "sovereignt") %>% na.omit()
 # which(names(world.fin)=="8/21/2021") # 580
 
 # a sample cartogram
-# png(file="img//COVID040.png", width = 1326, height = 942)
-# world.beg = world.fin %>% select(sovereignt, 40) # "2/28/2020"
-# world.carto = cartogram_cont(world.beg, 2, itermax=15, maxSizeError=1.5)
-# plot(world.carto, col=sf.colors(5,categorical=TRUE), border="grey", axes = FALSE) # pal=viridis_pal,  
+# png(file="img//COVID040.png", width = 1600, height = 1024)
+# world.beg = world.fin %>% select(sovereignt, 580) # "2/28/2020"
+# world.carto = cartogram_cont(world.beg, weight=2, itermax=15)
+# plot(world.carto, pal=viridis, border="grey", axes = FALSE) # col=sf.colors(5,categorical=TRUE), 
 # dev.off()
-world.fin <- world.fin %>% select(sovereignt,3:580)
-world.fin$indicator="deaths"
+
+# world.fin$indicator="deaths"
 # tail(world.fin) # 166
 
 # 5. LOOP (and save) over each day col to cartogram it 
+world.fin <- world.fin %>% select(sovereignt,40:580) # 2/28/2020:8/22/2021
 beg=which(names(world.fin)=="2/28/2020") # 40
 end=which(names(world.fin)=="8/21/2021") # 580
 # inc=10
@@ -104,7 +105,7 @@ for (i in beg:end) {
     # %>% mutate(daily.total = sum(as.numeric(value), na.rm = TRUE)) 
     # %>% mutate(title = paste0("date: ", day, "\nTotal COVID-19 deaths (x1000): ", round(daily.total/1e3, 2)))
 
-  world.carto = cartogram_cont(world.loop, 2, itermax=15, maxSizeError=1.5)
+  world.carto = cartogram_cont(world.loop, weight=i, itermax=15, maxSizeError=1.5)
   # warning: this may make your computer's fan spin!
   # world.carto = world.loop %>% 
   #   purrr::map(cartogram_cont, 2, itermax=15, maxSizeError=1.5) %>% 
@@ -115,8 +116,8 @@ for (i in beg:end) {
   #   delay = 75, width = 1326, height = 942)
   
   fname=sprintf("img//COVID%03d.png",i)
-  png(file=fname, width = 1326, height = 942)
-  plot(world.carto, col=sf.colors(5,categorical=TRUE), border="grey", axes = FALSE) 
+  png(file=fname, width = 1600, height = 1024)
+  plot(world.carto, pal=viridis, border="grey", axes = FALSE) 
   dev.off()
 }
 
