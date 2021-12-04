@@ -84,28 +84,27 @@ world.fin <- left_join(world.map, world.tab, by = "sovereignt") %>% na.omit()
 # which(names(world.fin)=="8/21/2021") # 580
 
 # a sample cartogram
-# png(file="img//COVID040.png", width = 1600, height = 1024)
-# world.beg = world.fin %>% select(sovereignt, 580) # "2/28/2020"
-# world.carto = cartogram_cont(world.beg, weight=2, itermax=15)
-# plot(world.carto, pal=viridis, border="grey", axes = FALSE) # col=sf.colors(5,categorical=TRUE), 
-# dev.off()
+png(file="img//COVID040.png", width = 1600, height = 1024)
+world.beg = world.fin %>% select(sovereignt, 580) # "2/28/2020"
+world.carto = cartogram_cont(world.beg, weight=2, itermax=15)
+plot(world.carto, pal=viridis, border="grey", axes=FALSE) 
+dev.off()
 
 # world.fin$indicator="deaths"
 # tail(world.fin) # 166
 
-# 5. LOOP (and save) over each day col to cartogram it 
-world.fin <- world.fin %>% select(sovereignt,40:580) # 2/28/2020:8/22/2021
-beg=which(names(world.fin)=="2/28/2020") # 40
-end=which(names(world.fin)=="8/21/2021") # 580
-# inc=10
-for (i in beg:end) {
-  print(i) 
+# 5. LOOP over (and save) each day's data to cartogram it 
+inc <- 100 # experiment
+beg <- which(names(world.fin)=="2/28/2020") # 40
+end <- which(names(world.fin)=="8/21/2021") # 580
+for (i in seq(beg,end,inc)) {
+  print(paste("day: ", as.character(i))) # , " date ", names(world.fin$i)
   # compute daily totals
-  world.loop = world.fin %>% select(sovereignt, i)
+  world.loop <- world.fin %>% select(sovereignt, i)
     # %>% mutate(daily.total = sum(as.numeric(value), na.rm = TRUE)) 
     # %>% mutate(title = paste0("date: ", day, "\nTotal COVID-19 deaths (x1000): ", round(daily.total/1e3, 2)))
 
-  world.carto = cartogram_cont(world.loop, weight=i, itermax=15, maxSizeError=1.5)
+  world.carto = cartogram_cont(world.loop, weight=2, itermax=15)
   # warning: this may make your computer's fan spin!
   # world.carto = world.loop %>% 
   #   purrr::map(cartogram_cont, 2, itermax=15, maxSizeError=1.5) %>% 
@@ -114,10 +113,10 @@ for (i in beg:end) {
   #   tm_facets(along = "title", free.coords = FALSE, drop.units = TRUE)
   # tmap_animation(carto.anim, filename = "covid19-deaths-world.gif",
   #   delay = 75, width = 1326, height = 942)
-  
+  # tmap_arrange(world.carto, nrow = 1)  
   fname=sprintf("img//COVID%03d.png",i)
   png(file=fname, width = 1600, height = 1024)
-  plot(world.carto, pal=viridis, border="grey", axes = FALSE) 
+  plot(world.carto, pal=viridis, border="grey", axes = FALSE)
   dev.off()
 }
 
